@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PPK 解包脚本 · XuanQian</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:monospace;background:#fff;color:#000;padding:24px;max-width:600px;line-height:1.8}
+  a{color:#000;text-decoration:underline}
+  a:hover{color:#555}
+  .dim{color:#888}
+  .cmd{background:#f5f5f5;border:1px solid #ccc;padding:2px 6px;cursor:pointer;user-select:all}
+  .cmd:hover{background:#eee}
+  .row{display:flex;gap:8px;align-items:baseline;border-bottom:1px dotted #ccc;padding:2px 0}
+  .row:hover{background:#f5f5f5}
+  .ver{flex:1}
+  .fname{color:#888;font-size:13px}
+  .badge{font-size:11px;background:#1B6B2B;color:#fff;padding:1px 6px}
+</style>
+</head>
+<body>
+<div>← <a href="text_unpacker.html">返回</a></div>
+<br>
+<div>依赖：<span class="cmd" onclick="copyCmd('pip install zstandard')">pip install zstandard</span> <span id="hint" class="dim"></span></div>
+<br>
+<div id="status" class="dim">正在获取版本列表...</div>
+<div id="list"></div>
+<script>
+const API="https://api.github.com/repos/e-xq/e-xq.github.io/contents/PPK_Unlocker";
+function escHtml(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+function extractVersion(f){const m=f.match(/(\d+(?:\.\d+)+)/);return m?m[1]:"0"}
+function compareVer(a,b){const pa=a.split(".").map(Number),pb=b.split(".").map(Number);for(let i=0;i<Math.max(pa.length,pb.length);i++){const d=(pa[i]||0)-(pb[i]||0);if(d)return d;}return 0}
+async function load(){
+  try{
+    const files=(await(await fetch(API)).json()).filter(f=>f.name.endsWith(".py")).sort((a,b)=>compareVer(extractVersion(b.name),extractVersion(a.name)));
+    if(!files.length){document.getElementById("status").textContent="暂无版本";return;}
+    document.getElementById("status").textContent="";
+    document.getElementById("list").innerHTML=files.map((f,i)=>`<div class="row"><span class="ver">v${escHtml(extractVersion(f.name))}${i===0?' <span class="badge">最新</span>':''}</span><span class="fname">${escHtml(f.name)}</span><a href="${f.download_url}" download>[ 下载 ]</a></div>`).join("");
+  }catch(e){document.getElementById("status").textContent="获取失败："+e.message}
+}
+function copyCmd(text){
+  const hint=document.getElementById("hint");
+  if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>{hint.textContent="← 已复制";setTimeout(()=>hint.textContent="",2000)})}
+  else{const ta=document.createElement("textarea");ta.value=text;ta.style.cssText="position:fixed;opacity:0";document.body.appendChild(ta);ta.select();try{document.execCommand("copy");hint.textContent="← 已复制";setTimeout(()=>hint.textContent="",2000)}catch(e){}document.body.removeChild(ta)}
+}
+load();
+</script>
+</body>
+</html>
